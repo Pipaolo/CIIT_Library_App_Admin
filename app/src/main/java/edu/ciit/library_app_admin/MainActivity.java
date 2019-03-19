@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -15,11 +17,15 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
+import edu.ciit.library_app_admin.Adapters.PendingBooksAdapter;
 import edu.ciit.library_app_admin.Fragments.AddBookFragment;
+import edu.ciit.library_app_admin.Models.PendingBooks;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, AddBookFragment.OnFragmentInteractionListener {
@@ -30,7 +36,12 @@ public class MainActivity extends AppCompatActivity
     //CollectionReference Book_Borrowed = db.collection("Book_Shelf");
     //CollectionReference Book_Transaction_Logs = db.collection("Book_Shelf");
     //CollectionReference Genres = db.collection("Book_Shelf");
-    CollectionReference Pending_Books = db.collection("Book_Shelf");
+    CollectionReference Pending_Books = db.collection("Pending_Books");
+
+    //Recycler View Adapter
+    private RecyclerView mRecyclerView;
+    private PendingBooksAdapter mAdapter;
+    //
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,10 +56,12 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 AddBookFragment fragment = new AddBookFragment();
-                getSupportFragmentManager().beginTransaction().replace(R.id.main_menu,fragment).commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.main_menu,fragment).addToBackStack(null).commit();
 
             }
         });
+
+        setUpRecyclerView();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -58,6 +71,21 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void setUpRecyclerView()
+    {
+        Query query = Pending_Books.orderBy("title", Query.Direction.ASCENDING);
+
+        FirestoreRecyclerOptions<PendingBooks> options = new FirestoreRecyclerOptions.Builder<PendingBooks>()
+            .setQuery(query, PendingBooks.class).build();
+
+        mAdapter = new PendingBooksAdapter(options, getApplicationContext());
+
+        mRecyclerView = findViewById(R.id.recyclerView_requestedBooksMenu);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        mRecyclerView.setAdapter(mAdapter);
     }
 
     @Override
@@ -99,7 +127,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_RequestedBooks) {
-            // Handle the camera action
+            AddBookFragment fragment = new AddBookFragment();
+            getSupportFragmentManager().beginTransaction().remove(fragment);
         } else if (id == R.id.nav_AcceptedBooks) {
 
         } else if (id == R.id.nav_DeniedBooks) {
@@ -119,4 +148,19 @@ public class MainActivity extends AppCompatActivity
     public void onFragmentInteraction(Uri uri) {
 
     }
+
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+        mAdapter.startListening();
+    }
+
+    @Override
+    public void onStop()
+    {
+        super.onStop();
+        mAdapter.stopListening();
+    }
+
 }
