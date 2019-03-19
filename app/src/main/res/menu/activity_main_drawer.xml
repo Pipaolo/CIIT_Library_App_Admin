@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_RequestedBooks"
+            android:title="Requested Books" />
+        <item
+            android:id="@+id/nav_DeniedBooks"
+            android:title="Denied Books" />
+        <item
+            android:id="@+id/nav_AcceptedBooks"
+            android:title="Accepted Books" />
+        <item
+            android:id="@+id/nav_ReturnedBooks"
+            android:title="Returned Books" />
+    </group>
+
+    <item
+        android:id="@+id/nav_SignOut"
+        android:title="Sign Out"/>
+</menu>
