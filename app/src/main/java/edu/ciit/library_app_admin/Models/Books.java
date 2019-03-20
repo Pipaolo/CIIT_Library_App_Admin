@@ -1,13 +1,22 @@
 package edu.ciit.library_app_admin.Models;
 
-public class PendingBooks {
+public class Books {
     private String title;
     private String genre;
     private String name;
     private String email;
     private String description;
     private String section;
-    private String id;
+    private boolean isBorrowed;
+    private int id;
+
+    public boolean isBorrowed() {
+        return isBorrowed;
+    }
+
+    public void setBorrowed(boolean borrowed) {
+        isBorrowed = borrowed;
+    }
 
     public String getGenre() {
         return genre;
@@ -49,11 +58,11 @@ public class PendingBooks {
         this.section = section;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -65,7 +74,7 @@ public class PendingBooks {
         this.title = title;
     }
 
-    public PendingBooks() {
+    public Books() {
     }
 
 

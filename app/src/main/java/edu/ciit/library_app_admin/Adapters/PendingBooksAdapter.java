@@ -3,6 +3,7 @@ package edu.ciit.library_app_admin.Adapters;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,11 +13,19 @@ import android.widget.Toast;
 
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import edu.ciit.library_app_admin.Models.PendingBooks;
+import java.util.HashMap;
+
+import edu.ciit.library_app_admin.Models.Books;
 import edu.ciit.library_app_admin.R;
 
-public class PendingBooksAdapter extends FirestoreRecyclerAdapter<PendingBooks, PendingBooksAdapter.PendingBooksHolder> {
+public class PendingBooksAdapter extends FirestoreRecyclerAdapter<Books, PendingBooksAdapter.PendingBooksHolder> {
 
     /**
      * Create a new RecyclerView adapter that listens to a Firestore Query.  See {@link
@@ -25,14 +34,21 @@ public class PendingBooksAdapter extends FirestoreRecyclerAdapter<PendingBooks, 
      * @param options
      */
     private Context mContext;
+    private CollectionReference Borrowed_Book;
+    private CollectionReference Pending_Books;
 
-    public PendingBooksAdapter(@NonNull FirestoreRecyclerOptions<PendingBooks> options, Context context) {
+    public PendingBooksAdapter(@NonNull FirestoreRecyclerOptions<Books> options,
+                               Context context,
+                               CollectionReference Pending_Books,
+                               CollectionReference Borrowed_Books) {
         super(options);
         this.mContext = context;
+        this.Borrowed_Book = Borrowed_Books;
+        this.Pending_Books = Pending_Books;
     }
 
     @Override
-    protected void onBindViewHolder(@NonNull PendingBooksHolder holder, int position, @NonNull PendingBooks model) {
+    protected void onBindViewHolder(@NonNull PendingBooksHolder holder, int position, @NonNull Books model) {
         holder.StudentName.setText(model.getName());
         holder.StudentEmail.setText(model.getEmail());
         holder.StudentSection.setText(model.getSection());
@@ -42,13 +58,54 @@ public class PendingBooksAdapter extends FirestoreRecyclerAdapter<PendingBooks, 
 
     @NonNull
     @Override
-    public PendingBooksHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+    public PendingBooksHolder onCreateViewHolder(@NonNull final ViewGroup viewGroup, int i) {
 
-        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.items_requested_books, viewGroup, false);
+        final View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.items_requested_books, viewGroup, false);
+
         v.findViewById(R.id.imageViewCheckButton).setOnClickListener(new View.OnClickListener() {
+            TextView studentName = v.findViewById(R.id.studentName);
+
             @Override
             public void onClick(View v) {
                 Toast.makeText(mContext, "Borrow Accept", Toast.LENGTH_SHORT).show();
+
+        Pending_Books.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for(final QueryDocumentSnapshot queryDocumentSnapshot : queryDocumentSnapshots)
+                {
+                    final Books books = queryDocumentSnapshot.toObject(Books.class);
+
+                    if(books.getName().equals(studentName.getText().toString()))
+                    {
+                        Log.d("FIRESTORE", "Book Found");
+                        HashMap<String,Object> Data = new HashMap<>();
+                        Data.put("title", books.getTitle());
+                        Data.put("genre", books.getGenre());
+                        Data.put("description", books.getDescription());
+                        Data.put("id", books.getId());
+                        Data.put("name", books.getName());
+                        Data.put("email", books.getEmail());
+                        Data.put("section",books.getSection());
+                        Data.put("isBorrowed", true);
+
+                        Borrowed_Book.add(Data).addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Pending_Books.document(queryDocumentSnapshot.getId()).delete();
+                                Toast.makeText(mContext, books.getTitle() + " Accepted", Toast.LENGTH_SHORT).show();
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(mContext, books.getTitle() + "Error Saving", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                    Log.e("FIRESTORE", "Book Not Found");
+                }
+            }
+            });
             }
         });
 

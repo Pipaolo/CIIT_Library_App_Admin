@@ -3,7 +3,6 @@ package edu.ciit.library_app_admin;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,24 +23,31 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import edu.ciit.library_app_admin.Adapters.PendingBooksAdapter;
+import edu.ciit.library_app_admin.Fragments.AcceptedBooksFragment;
 import edu.ciit.library_app_admin.Fragments.AddBookFragment;
-import edu.ciit.library_app_admin.Models.PendingBooks;
+import edu.ciit.library_app_admin.Fragments.Denied_Books;
+import edu.ciit.library_app_admin.Fragments.ReturnedBooksFragment;
+import edu.ciit.library_app_admin.Models.Books;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, AddBookFragment.OnFragmentInteractionListener {
 
     //Firebase Stuff
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-    //CollectionReference Book_Shelf = db.collection("Book_Shelf");
-    //CollectionReference Book_Borrowed = db.collection("Book_Shelf");
-    //CollectionReference Book_Transaction_Logs = db.collection("Book_Shelf");
-    //CollectionReference Genres = db.collection("Book_Shelf");
+    CollectionReference Book_Shelf = db.collection("Book_Shelf");
+    CollectionReference Book_Transaction_Logs = db.collection("Book_Shelf");
+    CollectionReference Genres = db.collection("Book_Shelf");
+    CollectionReference Book_Borrowed = db.collection("Borrowed_Books");
     CollectionReference Pending_Books = db.collection("Pending_Books");
 
     //Recycler View Adapter
     private RecyclerView mRecyclerView;
     private PendingBooksAdapter mAdapter;
     //
+
+    String studentName;
+    String studentEmail;
+    String studentSection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,10 +83,10 @@ public class MainActivity extends AppCompatActivity
     {
         Query query = Pending_Books.orderBy("title", Query.Direction.ASCENDING);
 
-        FirestoreRecyclerOptions<PendingBooks> options = new FirestoreRecyclerOptions.Builder<PendingBooks>()
-            .setQuery(query, PendingBooks.class).build();
+        FirestoreRecyclerOptions<Books> options = new FirestoreRecyclerOptions.Builder<Books>()
+            .setQuery(query, Books.class).build();
 
-        mAdapter = new PendingBooksAdapter(options, getApplicationContext());
+        mAdapter = new PendingBooksAdapter(options, getApplicationContext(), Pending_Books, Book_Borrowed);
 
         mRecyclerView = findViewById(R.id.recyclerView_requestedBooksMenu);
         mRecyclerView.setHasFixedSize(true);
@@ -127,14 +133,18 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_RequestedBooks) {
-            AddBookFragment fragment = new AddBookFragment();
-            getSupportFragmentManager().beginTransaction().remove(fragment);
+            for (Fragment fragment:getSupportFragmentManager().getFragments()) {
+                    getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+            }
         } else if (id == R.id.nav_AcceptedBooks) {
-
+            AcceptedBooksFragment fragment = new AcceptedBooksFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.main_menu, fragment).addToBackStack(null).commit();
         } else if (id == R.id.nav_DeniedBooks) {
-
+            Denied_Books fragment = new Denied_Books();
+            getSupportFragmentManager().beginTransaction().replace(R.id.main_menu, fragment).addToBackStack(null).commit();
         } else if (id == R.id.nav_ReturnedBooks) {
-
+            ReturnedBooksFragment fragment = new ReturnedBooksFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.main_menu, fragment).addToBackStack(null).commit();
         } else if (id == R.id.nav_SignOut) {
 
         }
